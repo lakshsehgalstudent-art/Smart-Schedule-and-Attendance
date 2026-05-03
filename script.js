@@ -605,23 +605,10 @@ function findNextCommonFreeTime() {
   const suhaniHasMore = hasClassesRemainingToday("suhani", today, now);
   const lakshHasMore  = hasClassesRemainingToday("laksh",  today, now);
 
-  // CASE: Both currently free
-  if (!suhaniBusy && !lakshBusy) {
-    // If neither has anything left → hide the block entirely
-    if (!suhaniHasMore && !lakshHasMore) return null;
-
-    // They're free NOW but at least one has classes coming up.
-    // We want the NEXT future moment when BOTH are free *after being busy*.
-    // i.e. the end of the next combined busy interval that starts after now.
-    const combined = getCombinedBusyIntervals(today);
-    // Find the first interval that STARTS at or after now (i.e. a future busy block)
-    const nextBusy = combined.find(([s, e]) => s >= now);
-    if (!nextBusy) return null; // no future busy interval → no transition
-    // The end of that future busy interval is when they become free together again
-    const freeMin = nextBusy[1];
-    if (freeMin <= now) return null;
-    return `Today at ${minsToDisplay(freeMin)}`;
-  }
+  // CASE: Both currently free → DO NOT show anything
+if (!suhaniBusy && !lakshBusy) {
+  return null;
+}
 
   // CASE: At least one is busy → find when both become free
   const transition = findNextBothFreeTransition(today, now);
