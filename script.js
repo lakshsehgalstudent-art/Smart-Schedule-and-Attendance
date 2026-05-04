@@ -454,11 +454,11 @@ function switchProfile(profile, btn) {
   const dname     = document.getElementById("drawer-name");
 
   if (profile === "suhani") {
-    avatar.src = drawerAva.src = "https://i.pinimg.com/564x/02/a9/55/02a9551d5605cfb4a3f2ae976905f09e.jpg";
+    avatar.src = drawerAva.src = "IMG_0162.jpg";
     title.textContent = "Suhani's Timetable";
     dname.textContent = "Suhani";
   } else {
-    avatar.src = drawerAva.src = "https://i.pinimg.com/originals/f4/2a/f1/f42af16ba580f84430d39a5838ad0c70.jpg";
+    avatar.src = drawerAva.src = "IMG_0163.jpeg";
     title.textContent = "Laksh's Timetable";
     dname.textContent = "Laksh";
   }
@@ -1834,7 +1834,7 @@ window.onload = () => {
     const title  = document.getElementById("header-title");
     const dname  = document.getElementById("drawer-name");
     if (currentProfile === "laksh") {
-      avatar.src = dAva.src = "https://i.pinimg.com/originals/f4/2a/f1/f42af16ba580f84430d39a5838ad0c70.jpg";
+      avatar.src = dAva.src = "IMG_0163.jpeg";
       title.textContent = "Laksh's Timetable";
       dname.textContent = "Laksh";
     }
