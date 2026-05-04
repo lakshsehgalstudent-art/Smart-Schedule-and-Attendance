@@ -600,8 +600,7 @@ function renderSchedule(container, dayData, viewingToday, dayKey) {
       progressHTML = `<div class="progress-overlay" style="background:linear-gradient(90deg,rgba(29,61,155,0.06) 0%,rgba(29,61,155,0.06) ${pct}%,transparent ${pct}%,transparent 100%);"></div>`;
     }
 
-    const liveCharSrc = "https://media.tenor.com/oajbons5PGEAAAAC/shinchan-cute.gif";
-    const charHTML = isCurrent ? `<div class="shinchan-live"><img src="${liveCharSrc}" alt="live"></div>` : '';
+    const charHTML = '';
 
     const timeDisplay = formatTimeRange(item.start, item.end);
 
