@@ -585,7 +585,7 @@ function renderSchedule(container, dayData, viewingToday, dayKey) {
 
     const type       = (item.type || "DSC").toUpperCase();
     const tagLabel   = isCurrent ? "live" : type;
-    const tagText    = isCurrent ? "🔴 LIVE" : type;
+    const tagText    = isCurrent ? '<span class="live-dot"></span>LIVE' : type;
     const extraClass = isBreakCard ? " break-card" : "";
 
     const roomChip    = !isBreakCard && isValid(item.room)    ? `<span class="room">📍 ${item.room}</span>` : '';
