@@ -454,7 +454,7 @@ function switchProfile(profile, btn) {
   const dname     = document.getElementById("drawer-name");
 
   if (profile === "suhani") {
-    avatar.src = drawerAva.src = "IMG_0162.jpg";
+    avatar.src = drawerAva.src = "IMG_0162.jpeg";
     title.textContent = "Suhani's Timetable";
     dname.textContent = "Suhani";
   } else {
