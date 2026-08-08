@@ -1682,6 +1682,12 @@ const UI = {
                         <p id="authError" class="text-red-600 text-sm font-semibold hidden"></p>
                         <button type="submit" id="loginBtn" class="w-full bg-navy text-white font-bold py-3 rounded-lg mt-2 transition-transform active:scale-95">Login</button>
                     </form>
+                    <button
+    type="button"
+    onclick="CloudManager.showForgotPassword()"
+    class="text-sm text-navy font-semibold mt-3 hover:underline">
+    Forgot Password?
+</button>
                 </div>
 
                 <!-- Profile Selection View -->
