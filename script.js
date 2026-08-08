@@ -296,10 +296,12 @@ async handleForgotPassword(event) {
         const login = document.getElementById('authLoginView');
         const profile = document.getElementById('authProfileView');
         const loader = document.getElementById('authLoadingView');
+       const forgot = document.getElementById('authForgotView');
         
         overlay.style.display = 'flex';
         login.style.display = state === 'login' ? 'flex' : 'none';
         profile.style.display = state === 'profile' ? 'flex' : 'none';
+       forgot.style.display = state === 'forgot' ? 'flex' : 'none';
         
         if (state === 'loading') {
             loader.style.display = 'flex';
