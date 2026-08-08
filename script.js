@@ -1689,6 +1689,41 @@ const UI = {
     Forgot Password?
 </button>
                 </div>
+                
+<!-- Forgot Password View -->
+<div id="authForgotView" class="w-full max-w-sm flex-col items-center" style="display:none;">
+    <h2 class="font-display text-2xl text-navy mb-1">Reset Password</h2>
+    <p class="text-sm text-gray-500 mb-6">
+        Enter your email and we'll send you a password reset link.
+    </p>
+
+    <form onsubmit="CloudManager.handleForgotPassword(event)" class="w-full flex flex-col gap-3">
+        <input
+            type="email"
+            id="forgotEmail"
+            placeholder="Email Address"
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-navy focus:ring-1 focus:ring-navy"
+            required
+            autocomplete="email">
+
+        <p id="forgotError" class="text-red-600 text-sm font-semibold hidden"></p>
+        <p id="forgotSuccess" class="text-green-600 text-sm font-semibold hidden"></p>
+
+        <button
+            type="submit"
+            id="forgotBtn"
+            class="w-full bg-navy text-white font-bold py-3 rounded-lg mt-2 transition-transform active:scale-95">
+            Send Reset Link
+        </button>
+    </form>
+
+    <button
+        type="button"
+        onclick="CloudManager.showAuthScreen('login')"
+        class="text-sm text-navy font-semibold mt-4 hover:underline">
+        ← Back to Login
+    </button>
+</div>
 
                 <!-- Profile Selection View -->
                 <div id="authProfileView" class="w-full max-w-sm flex-col items-center" style="display:none;">
