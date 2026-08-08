@@ -12,6 +12,13 @@
 /* =============================================
    MODULE: CONSTANTS & DEFAULTS
    ============================================= */
+const SUPABASE_URL = "https://dztdpvokmwyvvxlzynls.supabase.co/rest/v1/";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6dGRwdm9rbXd5dnZ4bHp5bmxzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxNjA3NjAsImV4cCI6MjEwMTczNjc2MH0.Cmrd1BKkuCpJzFWlbOGvJ6UhdgyQkLyYUbouZ0_drX0";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
 const CONSTANTS = {
     PROFILES: ["suhani", "laksh"],
     DAY_KEYS: ["mon", "tue", "wed", "thu", "fri", "sat"],
