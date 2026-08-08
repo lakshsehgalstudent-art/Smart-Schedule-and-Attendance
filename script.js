@@ -134,7 +134,7 @@ const CloudManager = {
     },
 
    async showForgotPassword() {
-    UI.showAuthView('authForgotView');
+    CloudManager.showAuthScreen('forgot');
     document.getElementById('forgotEmail').value =
         document.getElementById('authEmail').value || '';
 },
