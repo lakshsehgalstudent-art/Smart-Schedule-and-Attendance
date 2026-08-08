@@ -133,6 +133,42 @@ const CloudManager = {
         }
     },
 
+   async showForgotPassword() {
+    UI.showAuthView('authForgotView');
+    document.getElementById('forgotEmail').value =
+        document.getElementById('authEmail').value || '';
+},
+
+async handleForgotPassword(event) {
+    event.preventDefault();
+
+    const email = document.getElementById('forgotEmail').value.trim();
+    const btn = document.getElementById('forgotBtn');
+    const errorEl = document.getElementById('forgotError');
+    const successEl = document.getElementById('forgotSuccess');
+
+    errorEl.classList.add('hidden');
+    successEl.classList.add('hidden');
+
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://lakshsehgalstudent-art.github.io/Smart-Schedule-and-Attendance/'
+    });
+
+    if (error) {
+        errorEl.textContent = error.message;
+        errorEl.classList.remove('hidden');
+        btn.textContent = 'Send Reset Link';
+        btn.disabled = false;
+    } else {
+        successEl.textContent = 'Reset link sent. Check your email.';
+        successEl.classList.remove('hidden');
+        btn.textContent = 'Email Sent';
+    }
+},
+   
     async handleLogout() {
         CloudManager.showAuthScreen('loading', 'Logging out...');
         await supabaseClient.auth.signOut();
