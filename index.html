@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Attendance</title>
+    
+    <!-- Google Fonts: DM Sans and DM Serif Display -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700;9..40,900&family=DM+Serif+Display&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: '#0f2460',
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        display: ['"DM Serif Display"', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Fallback base styles for functional correctness */
+        .tab-page { display: none; }
+        .tab-page.active { display: block; }
+        body { -webkit-tap-highlight-color: transparent; }
+        
+        /* Drawer transitions */
+        #drawer { transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        #drawer.open { transform: translateX(0); }
+        #drawerOverlay { opacity: 0; pointer-events: none; transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        #drawerOverlay.open { opacity: 1; pointer-events: auto; }
+
+        /* Modal transitions & safe scrolling */
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        .modal-box {
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-body {
+            overflow-y: auto;
+            overscroll-behavior: contain;
+        }
+    </style>
+
+    <!-- Supabase JS v2 (MUST load before script.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 text-gray-900 font-sans antialiased selection:bg-navy selection:text-white">
+
+    <!-- Mobile-First App Container -->
+    <div class="max-w-md mx-auto bg-gray-50 min-h-[100dvh] relative shadow-2xl flex flex-col overflow-x-hidden">
+
+        <!-- Header -->
+        <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-3">
+                <button type="button" onclick="openDrawer()" class="p-2 -ml-2 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-navy" aria-label="Open Menu">
+                    <svg class="w-6 h-6 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <div class="flex flex-col">
+                    <span id="header-tab-label" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-tight" aria-live="polite">SCHEDULE</span>
+                    <span id="header-title" class="text-sm font-black text-navy leading-tight truncate max-w-[150px]">Suhani's Timetable</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button type="button" onclick="openCalendar()" class="p-2 -mr-1 rounded-full hover:bg-gray-100 active:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-navy" aria-label="Open Calendar">
+                    <svg class="w-5 h-5 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </button>
+                <img id="header-avatar" src="IMG_0162.jpeg" alt="Current User Profile" class="w-8 h-8 rounded-full border-2 border-white shadow-sm object-cover">
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="scheduleWrapper" class="flex-1 relative overflow-y-auto overscroll-y-contain">
+            
+            <!-- 1. SCHEDULE TAB -->
+            <div id="tab-schedule" class="tab-page active">
+                <div class="date-strip-header px-4 pt-4 pb-2">
+                    <div id="dateStripTitle" class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3"></div>
+                    <div id="tabs" class="flex items-center justify-between gap-1" role="tablist">
+                        <!-- Date Strip Buttons generated by JS -->
+                    </div>
+                </div>
+                <div id="schedule" class="p-4 pb-32 flex flex-col gap-3">
+                    <!-- Lecture Cards generated by JS -->
+                </div>
+            </div>
+
+            <!-- 2. ATTENDANCE TAB -->
+            <div id="tab-attendance" class="tab-page">
+                <div id="attendanceCards" class="p-4 pb-32 flex flex-col gap-4">
+                    <!-- Attendance Cards generated by JS -->
+                </div>
+            </div>
+
+            <!-- 3. TIMELINE TAB -->
+            <div id="tab-timeline" class="tab-page">
+                <div class="flex items-center justify-between px-4 pt-5 pb-2">
+                    <!-- Timeline header generated/injected by JS -->
+                </div>
+                <div id="timelineCards" class="p-4 pb-32 flex flex-col gap-3">
+                    <!-- Timeline Cards generated by JS -->
+                </div>
+            </div>
+
+            <!-- 4. ANALYTICS TAB -->
+            <div id="tab-analytics" class="tab-page">
+                <div id="analyticsContent" class="p-4 pb-32">
+                    <!-- Analytics Dash generated by JS (Includes overallAttChart) -->
+                </div>
+            </div>
+
+            <!-- 5. PROFILE TAB -->
+            <div id="tab-profile" class="tab-page">
+                <div id="profileContent" class="p-4 pb-32">
+                    <!-- Profile & Account UI generated by JS (Includes Change Password) -->
+                </div>
+            </div>
+
+            <!-- 6. SUBJECT DETAIL TAB -->
+            <div id="tab-subject-detail" class="tab-page">
+                <div id="subjectDetailContent" class="p-4 pb-32">
+                    <!-- Subject Detail View & Simulator generated by JS (Includes attChart) -->
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Next Class Popup -->
+        <div id="nextClassPopup" class="absolute bottom-20 left-4 right-4 bg-navy text-white px-5 py-4 rounded-2xl shadow-xl flex items-center gap-4 z-20 pointer-events-none transition-opacity duration-300" style="display: none;" role="status">
+            <span class="popup-icon text-2xl" aria-hidden="true"></span>
+            <span class="popup-text font-bold text-sm tracking-wide"></span>
+        </div>
+
+        <!-- Add Lecture FAB -->
+        <button type="button" id="fabAdd" onclick="openAddModal()" class="absolute bottom-6 right-6 w-14 h-14 bg-navy text-white rounded-full shadow-[0_8px_16px_rgba(15,36,96,0.3)] flex items-center justify-center text-3xl z-20 hover:scale-105 active:scale-95 transition-transform focus:outline-none focus:ring-4 focus:ring-blue-300" aria-label="Add New Lecture" style="display: none;">
+            +
+        </button>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- DRAWER NAVIGATION -->
+    <!-- ========================================== -->
+    <div id="drawerOverlay" class="fixed inset-0 bg-navy/40 z-40 backdrop-blur-sm" onclick="closeDrawer()" aria-hidden="true"></div>
+    <div id="drawer" class="fixed inset-y-0 left-0 w-[80vw] max-w-sm bg-white z-50 shadow-2xl flex flex-col" role="dialog" aria-modal="true" aria-label="Navigation Menu">
+        <div class="p-6 bg-gray-50 border-b border-gray-100 flex items-center gap-4">
+            <img id="drawer-avatar" src="IMG_0162.jpeg" alt="Workspace Profile" class="w-16 h-16 rounded-full border-2 border-white shadow-md object-cover">
+            <div>
+                <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Shared Workspace</div>
+                <div id="drawer-name" class="text-xl font-black text-navy leading-tight font-display">Suhani</div>
+            </div>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-1 overscroll-y-contain">
+            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 pt-3 pb-2">Main Menu</div>
+            <button id="nav-schedule" class="drawer-nav-item active flex items-center gap-4 px-4 py-3.5 rounded-xl font-bold text-[15px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors w-full text-left" onclick="switchTab('schedule')">
+                <span aria-hidden="true" class="text-lg">📅</span> Schedule
+            </button>
+            <button id="nav-attendance" class="drawer-nav-item flex items-center gap-4 px-4 py-3.5 rounded-xl font-bold text-[15px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors w-full text-left" onclick="switchTab('attendance')">
+                <span aria-hidden="true" class="text-lg">✅</span> Attendance
+            </button>
+            <button id="nav-timeline" class="drawer-nav-item flex items-center gap-4 px-4 py-3.5 rounded-xl font-bold text-[15px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors w-full text-left" onclick="switchTab('timeline')">
+                <span aria-hidden="true" class="text-lg">📜</span> Academic Timeline
+            </button>
+            <button id="nav-analytics" class="drawer-nav-item flex items-center gap-4 px-4 py-3.5 rounded-xl font-bold text-[15px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors w-full text-left" onclick="switchTab('analytics')">
+                <span aria-hidden="true" class="text-lg">📊</span> Analytics & Leaderboard
+            </button>
+            <button id="nav-profile" class="drawer-nav-item flex items-center gap-4 px-4 py-3.5 rounded-xl font-bold text-[15px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors w-full text-left" onclick="switchTab('profile')">
+                <span aria-hidden="true" class="text-lg">👤</span> Profile & Account
+            </button>
+            
+            <div class="h-px bg-gray-200 my-4 mx-3"></div>
+            
+            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 pb-2">Switch Profile</div>
+            <button id="dBtn-laksh" class="drawer-profile-btn flex items-center justify-between px-4 py-3 rounded-xl font-bold text-[15px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors w-full text-left" onclick="switchProfile('laksh')">
+                <div class="flex items-center gap-3">
+                    <img src="IMG_0163.jpeg" alt="Laksh" class="w-7 h-7 rounded-full object-cover shadow-sm"> Laksh
+                </div>
+                <span id="dCheck-laksh" class="text-navy text-lg" style="display:none;" aria-hidden="true">✔</span>
+            </button>
+            <button id="dBtn-suhani" class="drawer-profile-btn flex items-center justify-between px-4 py-3 rounded-xl font-bold text-[15px] text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors w-full text-left" onclick="switchProfile('suhani')">
+                <div class="flex items-center gap-3">
+                    <img src="IMG_0162.jpeg" alt="Suhani" class="w-7 h-7 rounded-full object-cover shadow-sm"> Suhani
+                </div>
+                <span id="dCheck-suhani" class="text-navy text-lg" style="display:none;" aria-hidden="true">✔</span>
+            </button>
+            
+            <div class="h-px bg-gray-200 my-4 mx-3"></div>
+            
+            <button id="logoutBtn" type="button" class="flex items-center gap-4 px-4 py-3.5 rounded-xl bg-red-50 text-red-600 text-[15px] font-bold hover:bg-red-100 active:bg-red-200 transition-colors w-full mt-auto mb-2" onclick="CloudManager.handleLogout()">
+                <span aria-hidden="true" class="text-lg">🚪</span> Log out
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODALS -->
+    <!-- ========================================== -->
+
+    <!-- Add/Edit Lecture Modal -->
+    <div id="editModal" class="fixed inset-0 z-[100] modal-overlay flex flex-col justify-end sm:justify-center items-center sm:px-4" onclick="handleModalOverlayClick(event)" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-box w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden pb-safe">
+            <div class="modal-handle w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3 mb-2 sm:hidden"></div>
+            <div class="modal-header px-6 py-4 flex justify-between items-center border-b border-gray-100">
+                <span class="modal-title font-display text-xl font-black text-navy" id="modalTitle">Class Details</span>
+                <button type="button" class="modal-close w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center transition-colors font-bold" onclick="closeModal()" aria-label="Close Modal">✕</button>
+            </div>
+            <div class="modal-body p-6 flex flex-col gap-4">
+                <div class="modal-field flex flex-col gap-1.5">
+                    <label for="edit-subject" class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Subject</label>
+                    <input type="text" id="edit-subject" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-base focus:border-navy focus:ring-1 focus:ring-navy focus:outline-none bg-gray-50 transition-colors" readonly>
+                </div>
+                <div class="flex gap-4">
+                    <div class="modal-field flex flex-col gap-1.5 w-1/2">
+                        <label for="edit-start" class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Start Time</label>
+                        <input type="time" id="edit-start" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-base focus:border-navy focus:ring-1 focus:ring-navy focus:outline-none bg-gray-50 transition-colors" readonly>
+                    </div>
+                    <div class="modal-field flex flex-col gap-1.5 w-1/2">
+                        <label for="edit-end" class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">End Time</label>
+                        <input type="time" id="edit-end" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-base focus:border-navy focus:ring-1 focus:ring-navy focus:outline-none bg-gray-50 transition-colors" readonly>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="modal-field flex flex-col gap-1.5 w-1/2">
+                        <label for="edit-room" class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Room</label>
+                        <input type="text" id="edit-room" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-base focus:border-navy focus:ring-1 focus:ring-navy focus:outline-none bg-gray-50 transition-colors" readonly>
+                    </div>
+                    <div class="modal-field flex flex-col gap-1.5 w-1/2">
+                        <label for="edit-teacher" class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Teacher</label>
+                        <input type="text" id="edit-teacher" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-base focus:border-navy focus:ring-1 focus:ring-navy focus:outline-none bg-gray-50 transition-colors" readonly>
+                    </div>
+                </div>
+                <div class="modal-field flex flex-col gap-1.5">
+                    <label for="editTag" class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Lecture Type</label>
+                    <select id="editTag" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-base font-semibold focus:border-navy focus:ring-1 focus:ring-navy focus:outline-none disabled:opacity-75 disabled:bg-gray-100 transition-colors" onchange="onTagChange()" disabled>
+                        <option value="DSC">DSC (Core)</option>
+                        <option value="SEC">SEC</option>
+                        <option value="VAC">VAC</option>
+                        <option value="AEC">AEC</option>
+                        <option value="GE">GE</option>
+                        <option value="TUTORIAL">Tutorial</option>
+                        <option value="PRACTICAL">Practical</option>
+                        <option value="BREAK">Break / Free Time</option>
+                    </select>
+                </div>
+                <div id="modalHint" class="text-red-500 text-xs font-semibold mt-1 empty:hidden" aria-live="polite"></div>
+            </div>
+            <div class="modal-footer p-6 pt-2 flex flex-col gap-3">
+                <button type="button" id="editToggleBtn" onclick="toggleEdit()" class="w-full py-3.5 rounded-xl font-bold bg-gray-100 text-navy hover:bg-gray-200 active:bg-gray-300 transition-colors text-[15px]">✏️ Edit Details</button>
+                <div class="flex gap-3 w-full">
+                    <button type="button" id="saveBtn" onclick="saveEdit()" class="flex-1 py-3.5 rounded-xl font-bold bg-navy text-white hover:bg-blue-900 active:scale-95 transition-all text-[15px]" style="display:none;">💾 Save</button>
+                    <button type="button" id="cancelBtn" onclick="cancelEdit()" class="flex-1 py-3.5 rounded-xl font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 transition-colors text-[15px]" style="display:none;">Cancel</button>
+                </div>
+                <button type="button" id="deleteBtn" onclick="deleteLecture()" class="w-full py-3.5 rounded-xl font-bold bg-red-50 text-red-600 hover:bg-red-100 active:bg-red-200 transition-colors text-[15px]" style="display:none;">🗑️ Delete Class</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Modal -->
+    <div id="calendarModal" class="fixed inset-0 z-[100] modal-overlay flex flex-col justify-end sm:justify-center items-center sm:px-4" onclick="handleCalendarOverlayClick(event)" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="calTitle">
+        <div class="modal-box w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden pb-6">
+            <div class="modal-handle w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3 mb-2 sm:hidden"></div>
+            <div class="modal-header px-6 py-5 flex justify-between items-center border-b border-gray-100">
+                <button type="button" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-200 transition-colors" onclick="calNavMonth(-1)" aria-label="Previous Month">←</button>
+                <span class="modal-title font-display text-xl font-black text-navy" id="calTitle">Month Year</span>
+                <button type="button" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-600 hover:bg-gray-200 transition-colors" onclick="calNavMonth(1)" aria-label="Next Month">→</button>
+            </div>
+            <div class="modal-body p-6">
+                <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">
+                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                </div>
+                <div id="calGrid" class="grid grid-cols-7 gap-2 text-center text-sm"></div>
+            </div>
+            <div class="modal-footer px-6">
+                <button type="button" class="modal-btn save-btn w-full bg-navy text-white font-bold py-3.5 rounded-xl hover:bg-blue-900 active:scale-95 transition-all text-[15px]" onclick="calJumpToToday()">Jump to Today</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Period Modal -->
+    <div id="periodModal" class="fixed inset-0 z-[100] modal-overlay flex flex-col justify-end sm:justify-center items-center sm:px-4" onclick="handlePeriodModalOverlayClick(event)" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
+        <div class="modal-box w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden pb-safe">
+            <div class="modal-handle w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3 mb-2 sm:hidden"></div>
+            <div class="modal-header px-6 py-4 flex justify-between items-center border-b border-gray-100">
+                <span class="modal-title font-display text-xl font-black text-navy" id="pmTitle">Add Academic Period</span>
+                <button type="button" class="modal-close w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center transition-colors font-bold" onclick="closePeriodModal()" aria-label="Close Modal">✕</button>
+            </div>
+            <div class="modal-body p-6 flex flex-col gap-4">
+                <div class="modal-field flex flex-col gap-1.5">
+                    <label for="pmName" class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Period Name</label>
+                    <input type="text" id="pmName" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-base focus:border-navy focus:ring-1 focus:ring-navy focus:outline-none transition-colors" placeholder="e.g. Semester 5">
+                </div>
+                <div class="modal-field flex flex-col gap-1.5">
+                    <label for="pmType" class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Type</label>
+                    <select id="pmType" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-base font-semibold focus:border-navy focus:ring-1 focus:ring-navy focus:outline-none transition-colors">
+                        <option value="Semester">Semester</option>
+                        <option value="Vacation">Vacation</option>
+                        <option value="Preparatory Leave">Preparatory Leave</option>
+                        <option value="Exam Period">Exam Period</option>
+                        <option value="Custom">Custom</option>
+                    </select>
+                </div>
+                <div class="flex gap-4">
+                    <div class="modal-field flex flex-col gap-1.5 w-1/2">
+                        <label for="pmStart" class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Start Date</label>
+                        <input type="date" id="pmStart" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-base focus:border-navy focus:ring-1 focus:ring-navy focus:outline-none transition-colors">
+                    </div>
+                    <div class="modal-field flex flex-col gap-1.5 w-1/2">
+                        <label for="pmEnd" class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">End Date</label>
+                        <input type="date" id="pmEnd" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-base focus:border-navy focus:ring-1 focus:ring-navy focus:outline-none transition-colors">
+                    </div>
+                </div>
+                <div class="modal-field flex flex-col gap-1.5" id="pmDupContainer">
+                    <label for="pmDuplicate" class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Duplicate Timetable From</label>
+                    <select id="pmDuplicate" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-base font-semibold focus:border-navy focus:ring-1 focus:ring-navy focus:outline-none transition-colors"></select>
+                </div>
+                <div id="pmHint" class="text-red-500 text-xs font-semibold mt-1 empty:hidden" aria-live="polite"></div>
+            </div>
+            <div class="modal-footer px-6 pb-6 pt-2 flex gap-3">
+                <button type="button" class="modal-btn save-btn flex-1 py-3.5 rounded-xl font-bold bg-navy text-white hover:bg-blue-900 active:scale-95 transition-all text-[15px]" onclick="savePeriod()">💾 Save</button>
+                <button type="button" class="modal-btn cancel-btn flex-1 py-3.5 rounded-xl font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 transition-colors text-[15px]" onclick="closePeriodModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Version Manager Modal -->
+    <div id="versionManagerModal" class="fixed inset-0 z-[100] modal-overlay flex flex-col justify-end sm:justify-center items-center sm:px-4" onclick="if(event.target.id === 'versionManagerModal') window.VersionManager.close()" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="vmTitle">
+        <div class="modal-box w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden pb-safe">
+            <div class="modal-handle w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3 mb-2 sm:hidden"></div>
+            <div class="modal-header px-6 py-4 flex justify-between items-center border-b border-gray-100">
+                <span class="modal-title font-display text-xl font-black text-navy" id="vmTitle">Manage Versions</span>
+                <button type="button" class="modal-close w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center transition-colors font-bold" onclick="window.VersionManager.close()" aria-label="Close Modal">✕</button>
+            </div>
+            <div class="modal-body p-6" id="vmBody" style="max-height: 55vh;"></div>
+            <div class="modal-footer px-6 pb-6" id="vmFooter"></div>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="customConfirmModal" class="fixed inset-0 z-[110] modal-overlay flex flex-col justify-end sm:justify-center items-center sm:px-4" style="display:none;" role="alertdialog" aria-modal="true">
+        <div class="modal-box w-full max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden pb-6">
+            <div class="modal-handle w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3 mb-2 sm:hidden"></div>
+            <div class="modal-header px-6 pt-4 pb-2">
+                <span class="modal-title font-display text-xl font-black text-navy">Confirm Action</span>
+            </div>
+            <div class="modal-body px-6 pb-6 pt-2" id="ccmMessage" style="font-size: 0.95rem; color: #4b5563; white-space: pre-wrap;"></div>
+            <div class="modal-footer px-6 flex gap-3">
+                <button type="button" class="modal-btn save-btn flex-1 py-3.5 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 active:scale-95 transition-all text-[15px]" id="ccmYes">Yes, Confirm</button>
+                <button type="button" class="modal-btn cancel-btn flex-1 py-3.5 rounded-xl font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 transition-colors text-[15px]" id="ccmNo">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- AUTHENTICATION OVERLAY (Mandatory) -->
+    <!-- ========================================== -->
+    <div id="authOverlay" class="fixed inset-0 bg-white z-[9999] flex flex-col items-center justify-center p-6 text-center overflow-y-auto" style="display:none;" aria-live="assertive">
+        
+        <!-- Login View -->
+        <div id="authLoginView" class="w-full max-w-sm flex-col items-center animate-fade-in" style="display:none;">
+            <div class="w-16 h-16 bg-navy text-white rounded-full flex items-center justify-center text-3xl mb-5 shadow-lg mx-auto" aria-hidden="true">📅</div>
+            <h1 class="font-display text-3xl text-navy mb-2 font-black">Smart Attendance</h1>
+            <p class="text-[15px] text-gray-500 mb-8 font-medium">Log in to sync your shared workspace</p>
+            <form onsubmit="CloudManager.handleLogin(event)" class="w-full flex flex-col gap-4 text-left">
+                <div>
+                    <label for="authEmail" class="sr-only">Email Address</label>
+                    <input type="email" id="authEmail" placeholder="Email Address" class="w-full px-4 py-3.5 rounded-xl border border-gray-300 text-base focus:outline-none focus:border-navy focus:ring-2 focus:ring-navy/20 transition-all shadow-sm" required autocomplete="email">
+                </div>
+                <div>
+                    <label for="authPassword" class="sr-only">Password</label>
+                    <input type="password" id="authPassword" placeholder="Password" class="w-full px-4 py-3.5 rounded-xl border border-gray-300 text-base focus:outline-none focus:border-navy focus:ring-2 focus:ring-navy/20 transition-all shadow-sm" required autocomplete="current-password">
+                </div>
+                <p id="authError" class="text-red-500 text-sm font-semibold hidden text-center" aria-live="polite"></p>
+                <button type="submit" id="loginBtn" class="w-full bg-navy text-white font-bold py-3.5 rounded-xl mt-2 transition-transform active:scale-95 hover:bg-blue-900 shadow-md text-[15px]">Login</button>
+            </form>
+            <button type="button" onclick="CloudManager.showForgotPassword()" class="text-[14px] text-navy font-bold mt-6 hover:underline focus:outline-none focus:ring-2 focus:ring-navy rounded px-2 py-1">Forgot Password?</button>
+        </div>
+        
+        <!-- Forgot Password View -->
+        <div id="authForgotView" class="w-full max-w-sm flex-col items-center animate-fade-in" style="display:none;">
+            <h2 class="font-display text-3xl text-navy mb-2 font-black">Reset Password</h2>
+            <p class="text-[15px] text-gray-500 mb-8 font-medium">Enter your email and we'll send you a password reset link.</p>
+            <form onsubmit="CloudManager.handleForgotPassword(event)" class="w-full flex flex-col gap-4 text-left">
+                <div>
+                    <label for="forgotEmail" class="sr-only">Email Address</label>
+                    <input type="email" id="forgotEmail" placeholder="Email Address" class="w-full px-4 py-3.5 rounded-xl border border-gray-300 text-base focus:outline-none focus:border-navy focus:ring-2 focus:ring-navy/20 transition-all shadow-sm" required autocomplete="email">
+                </div>
+                <p id="forgotError" class="text-red-500 text-sm font-semibold hidden text-center" aria-live="polite"></p>
+                <p id="forgotSuccess" class="text-green-600 text-sm font-semibold hidden text-center" aria-live="polite"></p>
+                <button type="submit" id="forgotBtn" class="w-full bg-navy text-white font-bold py-3.5 rounded-xl mt-2 transition-transform active:scale-95 hover:bg-blue-900 shadow-md text-[15px]">Send Reset Link</button>
+            </form>
+            <button type="button" onclick="CloudManager.showAuthScreen('login')" class="text-[14px] text-gray-500 font-bold mt-6 hover:text-navy transition-colors focus:outline-none focus:ring-2 focus:ring-navy rounded px-2 py-1">← Back to Login</button>
+        </div>
+
+        <!-- Reset Password View -->
+        <div id="authResetView" class="w-full max-w-sm flex-col items-center animate-fade-in" style="display:none;">
+            <h2 class="font-display text-3xl text-navy mb-2 font-black">Set New Password</h2>
+            <p class="text-[15px] text-gray-500 mb-8 font-medium">Enter your new secure password below.</p>
+            <form onsubmit="CloudManager.handleUpdatePassword(event)" class="w-full flex flex-col gap-4 text-left">
+                <div>
+                    <label for="resetPassword" class="sr-only">New Password</label>
+                    <input type="password" id="resetPassword" placeholder="New Password" class="w-full px-4 py-3.5 rounded-xl border border-gray-300 text-base focus:outline-none focus:border-navy focus:ring-2 focus:ring-navy/20 transition-all shadow-sm" required minlength="6">
+                </div>
+                <div>
+                    <label for="resetConfirmPassword" class="sr-only">Confirm Password</label>
+                    <input type="password" id="resetConfirmPassword" placeholder="Confirm Password" class="w-full px-4 py-3.5 rounded-xl border border-gray-300 text-base focus:outline-none focus:border-navy focus:ring-2 focus:ring-navy/20 transition-all shadow-sm" required minlength="6">
+                </div>
+                <p id="resetError" class="text-red-500 text-sm font-semibold hidden text-center" aria-live="polite"></p>
+                <p id="resetSuccess" class="text-green-600 text-sm font-semibold hidden text-center" aria-live="polite"></p>
+                <button type="submit" id="resetBtn" class="w-full bg-navy text-white font-bold py-3.5 rounded-xl mt-2 transition-transform active:scale-95 hover:bg-blue-900 shadow-md text-[15px]">Update Password</button>
+            </form>
+        </div>
+
+        <!-- Profile Selection View -->
+        <div id="authProfileView" class="w-full max-w-sm flex-col items-center animate-fade-in" style="display:none;">
+            <h2 class="font-display text-3xl text-navy mb-2 font-black">Who are you?</h2>
+            <p class="text-[15px] text-gray-500 mb-8 font-medium">Select your profile to continue</p>
+            <div class="flex flex-col gap-4 w-full">
+                <button type="button" onclick="CloudManager.selectProfile('Laksh')" class="flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-gray-200 hover:border-navy hover:bg-blue-50 active:scale-[0.98] transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-navy focus:border-transparent bg-white shadow-sm hover:shadow-md">
+                    <img src="IMG_0163.jpeg" alt="Laksh Profile" class="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm">
+                    <span class="font-black text-navy text-xl font-display">Laksh</span>
+                </button>
+                <button type="button" onclick="CloudManager.selectProfile('Suhani')" class="flex items-center gap-4 px-5 py-4 rounded-2xl border-2 border-gray-200 hover:border-navy hover:bg-blue-50 active:scale-[0.98] transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-navy focus:border-transparent bg-white shadow-sm hover:shadow-md">
+                    <img src="IMG_0162.jpeg" alt="Suhani Profile" class="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm">
+                    <span class="font-black text-navy text-xl font-display">Suhani</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading View -->
+        <div id="authLoadingView" class="flex-col items-center justify-center h-full w-full" style="display:none;">
+            <div class="w-14 h-14 border-4 border-gray-200 border-t-navy rounded-full animate-spin mb-5 mx-auto" role="status"></div>
+            <p id="authLoadingText" class="text-[15px] font-bold text-gray-600 tracking-wide" aria-live="polite">Connecting to Cloud...</p>
+        </div>
+    </div>
+
+    <!-- Final Script load -->
+    <script src="script.js"></script>
+</body>
+</html>
