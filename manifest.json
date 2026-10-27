@@ -1,0 +1,25 @@
+{
+  "name": "Smart Attendance & Academic Tracker",
+  "short_name": "Smart Attendance",
+  "description": "Offline-first attendance, timetable, assignment, and exam tracker for Laksh & Suhani.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f9fafb",
+  "theme_color": "#0f2460",
+  "icons": [
+    {
+      "src": "./IMG_0162.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "./IMG_0163.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}
