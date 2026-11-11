@@ -5487,13 +5487,25 @@ const ProfileManager = {
    ============================================= */
 const UI = {
     registerServiceWorker: () => {
-        if ("serviceWorker" in navigator) {
-            window.addEventListener("load", () => {
-                navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
-                    .catch(err => console.warn("Service worker registration skipped or failed:", err));
+    if (!("serviceWorker" in navigator)) return;
+
+    const register = () => {
+        navigator.serviceWorker
+            .register("./service-worker.js", { scope: "./" })
+            .then(registration => {
+                console.log("Service worker registered:", registration.scope);
+            })
+            .catch(error => {
+                console.error("Service worker registration failed:", error);
             });
-        }
-    },
+    };
+
+    if (document.readyState === "complete") {
+        register();
+    } else {
+        window.addEventListener("load", register, { once: true });
+    }
+},
 
     showToast: (message, type = "info") => {
         const container = document.getElementById("toastContainer");
